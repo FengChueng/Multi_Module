@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context   
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/util 
+	    http://www.springframework.org/schema/util/spring-util.xsd
+        http://www.springframework.org/schema/mvc   
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/task 
+        http://www.springframework.org/schema/task/spring-task.xsd">
+
+	<mvc:annotation-driven />
+	<context:component-scan base-package="com.zyl.web.controller" />
+	<mvc:default-servlet-handler />
+	<!--配置静态资源 -->
+	<!-- <mvc:resources location="/static/js/" mapping="/js/**" /> <mvc:resources 
+		location="/static/img/" mapping="/img/**" /> <mvc:resources location="/static/css/" 
+		mapping="/css/**" /> -->
+
+	<!-- 上传文件 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="utf-8"></property>
+		<property name="maxUploadSize" value="5242880"></property>
+		<property name="maxInMemorySize" value="40960"></property>
+		<property name="resolveLazily" value="true"></property>
+	</bean>
+	<!-- swagger -->
+	<!-- <bean class="com.txmd.configuration.Swagger2Configuration"></bean> -->
+
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**/*.json" />
+			<mvc:exclude-mapping path="/Login.json" />
+			<!-- 定义在mvc:interceptor下面的表示是对特定的请求才进行拦截的 -->
+			<bean class="com.txmd.interceptor.ManagerInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+	<!-- 视图解释类 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
+	</bean>
+
+	<!--这里就是Spring对http消息格式转换提供的接口 -->
+	<bean id="mappingStringHttpMessageConverter"
+		class="org.springframework.http.converter.StringHttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<value>text/plain;charset=UTF-8</value>
+				<value>application/json;charset=UTF-8</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="mappingJackson2HttpMessageConverter"
+		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<bean class="org.springframework.http.MediaType">
+					<constructor-arg index="0" value="application" />
+					<constructor-arg index="1" value="json" />
+					<constructor-arg index="2" value="UTF-8" />
+				</bean>
+			</list>
+		</property>
+	</bean>
+
+	<!--注册转换器到SpringMVC ，并注册在了上面的RequestMappingHandlerAdapter中 -->
+	<bean id="webBindingInitializer"
+		class="org.springframework.web.bind.support.ConfigurableWebBindingInitializer">
+		<property name="conversionService">
+			<bean
+				class="org.springframework.core.convert.support.DefaultConversionService"></bean>
+		</property>
+	</bean>
+	<!--这个是RequestMappingHandlerAdapter -->
+	<!--HandlerAdapter 作用如下： SpringMVC工作过程中，HandlerMapping找到Handler，Handler对具体的处理（Controller）进行封装， 
+		然后由HandlerAdapter对Handler进行具体处理 在这里我们定义了返回对象自动转换为Json数据 -->
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="cacheSeconds" value="0">
+			<property name="messageConverters">
+				<list>
+					<ref bean="mappingJackson2HttpMessageConverter" />
+					<ref bean="mappingStringHttpMessageConverter" />
+				</list>
+			</property>
+			<property name="webBindingInitializer" ref="webBindingInitializer" />
+		</property>
+	</bean>
+
+
+
+</beans>
