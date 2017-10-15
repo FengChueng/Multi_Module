@@ -1,6 +1,6 @@
 package com.zyl.core.pojo;
 
-import java.sql.Timestamp;
+import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,7 +16,11 @@ import org.hibernate.annotations.DynamicUpdate;
 @Table(name="order")
 @DynamicUpdate
 @DynamicInsert
-public class Order {
+public class Order implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int id;

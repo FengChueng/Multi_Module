@@ -1,5 +1,6 @@
 package com.zyl.core.pojo;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,7 +20,11 @@ import org.hibernate.annotations.DynamicUpdate;
 @Table(name="user")
 @DynamicInsert
 @DynamicUpdate
-public class User {
+public class User implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue
 	private int id;
@@ -30,9 +35,9 @@ public class User {
 	private int userSex;//0:female,1:male
 	@Column(name="user_age")	
 	private int userAge;
-	@OneToMany(targetEntity=Order.class,cascade = CascadeType.ALL)
+	/*@OneToMany(targetEntity=Order.class,cascade = CascadeType.ALL)
 	@JoinColumn(name="user_id")
-	private Set<Order> orderList = new HashSet<>();
+	private Set<Order> orderList = new HashSet<>();*/
 	public int getId() {
 		return id;
 	}
@@ -57,12 +62,12 @@ public class User {
 	public void setUserAge(int userAge) {
 		this.userAge = userAge;
 	}
-	public Set<Order> getOrderList() {
+	/*public Set<Order> getOrderList() {
 		return orderList;
 	}
 	public void setOrderList(Set<Order> orderList) {
 		this.orderList = orderList;
-	}
+	}*/
 	
 	
 }

@@ -1,25 +1,30 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
-	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemalocation="http://www.springframework.org/schema/beans 
-                        http://www.springframework.org/schema/beans/spring-beans.xsd 
-                        http://www.springframework.org/schema/tx 
-                        http://www.springframework.org/schema/tx/spring-tx.xsd
-                        http://www.springframework.org/schema/context
-                        http://www.springframework.org/schema/context/spring-context.xsd
-                        http://www.springframework.org/schema/aop
-                        http://www.springframework.org/schema/aop/spring-aop.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+        http://www.springframework.org/schema/task 
+        http://www.springframework.org/schema/task/spring-task-4.0.xsd
+        http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd"
+		default-lazy-init="true">
 	<!-- 开启注解配置 -->
 	<context:annotation-config />
 	<!-- 扫描注解,过滤掉Controller -->
-	<context:component-scan base-package="com.zyl.core" />
+	<context:component-scan
+		base-package="com.zyl.service" />
 
 	<!-- 引入数据库资源文件 -->
 	<!-- <bean id="databaseProperty" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"> 
 		<property name="location"> <value>classpath:database.properties</value> </property> 
 		</bean> -->
-	<context:property-placeholder location="classpath:*.properties" />
+	<context:property-placeholder location="classpath*:*.properties" />
 	<!-- 配置数据源 -->
 	<bean id="dataSource"
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
@@ -29,36 +34,87 @@
 		<property name="password" value="${jdbc.password}" />
 	</bean>
 
-	<bean id="sessionFactory"
-		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
 		<property name="dataSource" ref="dataSource" />
-		<property name="hibernateProperties">
-			<props>
-				<prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
-				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
-				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
-				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
-				<prop key="hibernate.transaction.coordinator_class">jdbc</prop>
-				<prop key="hibernate.query.startup_check">false</prop>
-				<prop key="hibernate.cache.use_second_level_cache">true</prop>
-				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory
-				</prop>
-			</props>
+		<!-- <property name="persistenceUnitName" value="spring-jpa" /> -->
+		<!-- <propety name="Hibernate.current_session_context_class">jta</propety> -->
+		<property name="packagesToScan" value="com.zyl.core.pojo" />
+		<!-- <property name="packagesToScan" > <list> 千万注意此处，要跟着项目名字变化！否则扫描不到实体，自然无法完成与数据库的映射 
+			<value>com.zyl.core.pojo.Order</value> <value>com.zyl.core.pojo.User</value> 
+			</list> </property> -->
+
+		<property name="persistenceProvider">
+			<bean class="org.hibernate.jpa.HibernatePersistenceProvider" />
 		</property>
-		<property name="packagesToScan">
-			<list>
-				<!--千万注意此处，要跟着项目名字变化！否则扫描不到实体，自然无法完成与数据库的映射 -->
-				<value>com.zyl.core.pojo.Order</value>
-				<value>com.zyl.core.pojo.User</value>
-			</list>
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+				<property name="generateDdl" value="false" />
+				<property name="database" value="MYSQL" />
+                <property name="databasePlatform" value="org.hibernate.dialect.MySQL5InnoDBDialect" />
+                <property name="showSql" value="true" />
+			</bean>
 		</property>
+		
+		<property name="jpaDialect">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect" />
+        </property>
+        <!-- <property name="jpaPropertyMap">
+            <map>
+                <entry key="hibernate.query.substitutions" value="true 1, false 0" />
+                <entry key="hibernate.default_batch_fetch_size" value="16" />
+                <entry key="hibernate.max_fetch_depth" value="2" />
+                <entry key="hibernate.generate_statistics" value="true" />
+                <entry key="hibernate.bytecode.use_reflection_optimizer" value="true" />
+                <entry key="hibernate.cache.use_second_level_cache" value="false" />
+                <entry key="hibernate.cache.use_query_cache" value="false" />
+            </map>
+        </property> -->
+        <!-- <property name="jpaProperties">
+             <props>
+                 <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                 <prop key="hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>
+                 <prop key="hibernate.cache.use_second_level_cache">${hibernate.cache.use_second_level_cache}</prop>
+                 <prop key="hibernate.cache.region.factory_class">${hibernate.cache.region.factory_class}</prop>
+                 <prop key="hibernate.cache.use_query_cache">${hibernate.cache.use_query_cache}</prop>
+                 <prop key="hibernate.jdbc.fetch_size">${hibernate.jdbc.fetch_size}</prop>
+                 <prop key="hibernate.jdbc.batch_size">${hibernate.jdbc.batch_size}</prop>
+                 <prop key="hibernate.hbm2ddl.auto">update</prop>
+                 <prop key="hibernate.show_sql">true</prop>
+                 <prop key="hibernate.format_sql">false</prop>
+                 <prop key="hibernate.use_sql_comments">false</prop>
+                 <prop key="hibernate.connection.isolation">2</prop>
+                 <prop key="javax.persistence.validation.mode">none</prop>
+             </props>
+         </property> -->
+         <property name="jpaProperties">
+             <props>
+                 <prop key="hibernate.jdbc.fetch_size">${hibernate.jdbc.fetch_size}</prop>
+                 <prop key="hibernate.jdbc.batch_size">${hibernate.jdbc.batch_size}</prop>
+                 <prop key="hibernate.hbm2ddl.auto">update</prop>
+                 <prop key="hibernate.show_sql">true</prop>
+                 <prop key="hibernate.format_sql">false</prop>
+                 <prop key="hibernate.use_sql_comments">false</prop>
+             </props>
+         </property>
 	</bean>
+	
+	
+	
+	
 
 	<!-- 配置事务管理器 -->
-	<bean id="transactionManager"
-		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
-		<property name="sessionFactory" ref="sessionFactory"></property>
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
 	</bean>
+	<!-- 启用 annotation事务 -->
+	<!-- <tx:annotation-driven transaction-manager="transactionManager" /> -->
+	<!-- 配置Spring Data JPA扫描目录 -->
+	 <!-- dao -->
+    <!-- <jpa:repositories base-package="com.zyl.core.repository" repository-impl-postfix="Impl" 
+    	entity-manager-factory-ref="entityManagerFactory" transaction-manager-ref="transactionManager" /> -->
+    <jpa:repositories base-package="com.zyl.core.repository"
+    	entity-manager-factory-ref="entityManagerFactory" transaction-manager-ref="transactionManager" />
 
 	<!-- 启用注解来管理事务 -->
 	<tx:annotation-driven proxy-target-class="true"
